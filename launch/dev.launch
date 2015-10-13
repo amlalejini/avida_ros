@@ -1,0 +1,13 @@
+<launch>
+  <!-- This launch file is used for dev purposes -->
+
+  <!-- Load everything in dev namespace -->
+  <group ns="dev">
+    <!-- Load params -->
+    <rosparam command="load" file="$(find avida_ros)/param/data_locs.yaml" />
+
+    <!-- Launch nodes -->
+    <node pkg="avida_ros" type="trace_server.py" output="screen" name="trace_server" />
+  </group>
+
+</launch>
