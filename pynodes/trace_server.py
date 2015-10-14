@@ -3,7 +3,7 @@
 import rospy, os, re
 import cPickle as pickle
 from avida_ros.msg import StandardDorgCPU, Trace
-
+from avida_ros.srv import GetAllTraces
 
 class TraceServer(object):
     '''
@@ -11,6 +11,23 @@ class TraceServer(object):
         Available services:
             - Blah
             - Blah
+
+    IMPOSED RESTRICTION ON WAY TRACES ARE STORED:
+      {trial_id: {
+        "env_id":
+            ("trace_id": trace_msg_obj),
+            ...
+        ,
+        "env_id":
+            ("trace_id": trace_msg_obj),
+            ...
+      },
+      trial_id: {
+        ...
+      }
+        ...
+      }
+    In terms of how this works out with the file structure: /...avida processed.../<trial_id>/<env_id>/<trace_id>...
     '''
     def __init__(self):
         '''
@@ -18,10 +35,15 @@ class TraceServer(object):
         '''
         ##########################################
         # Instance variables for this class
+        # TODO: right now, I'm storing traces in a bunch of different ways (mostly for different potential ways I would want to acess it)
+        #       I need to settle on a storage method.
         self.avida_processed_loc = None     # Location of processed avida data (from avida analyze)
         self.dataspace_loc = None           # Location of ros avida dataspace
         self.trace_dump = None              # Location of trace dump (in dataspace)
         self.trace_list = None              # List of loaded traces
+        self.trace_dict = None
+        self.trace_objs = None
+        self.get_all_traces_srv = None
         ##########################################
         # Initialize as ROS node
         rospy.init_node("TraceServer")
@@ -40,9 +62,18 @@ class TraceServer(object):
             rospy.logerr("Failed to clean parameters.")
             exit(-1)
         ##########################################
-        # Load/Extract traces
+        # Load/Extract traces (populate trace list and trace dict)
         self._load_traces(force_extract = force_extraction)
+        ##########################################
+        # Setup services available to other ROS nodes
+        self.get_all_traces_srv = rospy.Service("get_all_traces", GetAllTraces, self.get_all_traces_handler)
 
+    def run(self):
+        '''
+        Infinite run loop.
+        '''
+        rospy.loginfo("Traces loaded successfully.  Listening for requests.")
+        rospy.spin()
 
     def _clean_params(self):
         '''
@@ -107,32 +138,52 @@ class TraceServer(object):
         else
             generate new trace object, save as pickle
         '''
+        trace_dict = {}
         trace_objs = []
         # Get trace locations from avida processed directory
         self.trace_list = self._find_all_traces(self.avida_processed_loc)
         # Load them up and pickle 'em out
         for trace in self.trace_list:
+            # Collect some information about our trace
+            try:
+                tname_split = trace.split("/")
+                trial_id = tname_split[0]               # Grab the trial id
+                env_id = tname_split[1]                 # Grab the env id
+                trace_id = "/".join(tname_split[2:])    # Grab the trace id
+            except:
+                rospy.logerr("Failed to collect trace ID, env ID, and trial ID information about: %s" % trace)
+                continue
+            if trial_id not in trace_dict: trace_dict[trial_id] = {}
+            if env_id not in trace_dict[trial_id]: trace_dict[trial_id][env_id] = {}
+            if trace_id not in trace_dict[trial_id][env_id]: trace_dict[trial_id][env_id][trace_id] = None
             # Check to see if we already have a pickle of the trace object
-            print("Checking pickle? " + str(os.path.join(self.dataspace_loc, trace + ".pickle")))
-            pickled = os.path.exists(os.path.join(self.dataspace_loc, trace + ".pickle"))
+            pickled = os.path.exists(os.path.join(self.trace_dump, trace + ".pickle"))
             # If pickle exists and not force_extract: load from pickle
             if pickled and not force_extract:
+                print("Load from pickle")
                 # Load from pickle!
-                with open(os.path.join(self.dataspace_loc, trace + ".pickle")) as fp:
+                with open(os.path.join(self.trace_dump, trace + ".pickle")) as fp:
                     trace_obj = pickle.load(fp)
-                # Store it
-                trace_objs.append(trace_obj)
+                # Store it in trace dict
+                trace_dict[trial_id][env_id][trace_id] = trace_obj
+                trace_obj.append(trace_obj)
             else:
+                print("Load from file")
                 # Load from file!
-                print("ploc: " + str(self.avida_processed_loc))
-                print("trace: " + str(trace))
-                thing = os.path.join(self.avida_processed_loc, trace)
-                print("Joined: " + thing)
                 with open(os.path.join(self.avida_processed_loc, trace)) as fp:
                     trace_obj = self._extract_trace(fp)
+                    trace_obj.trial_id = trial_id
+                    trace_obj.env_id = env_id
+                    trace_obj.trace_id = trace_id
                 # store it (will want to store as dictionary after getting stuff working)
+                trace_dict[trial_id][env_id][trace_id] = trace_obj
                 trace_objs.append(trace_obj)
-                print("Load from file!")
+                # save it out!
+                if not os.path.exists(os.path.dirname(os.path.join(self.trace_dump, trace))): os.makedirs(os.path.dirname(os.path.join(self.trace_dump, trace)))
+                pickle.dump(trace_obj, open(os.path.join(self.trace_dump, trace) + ".pickle", "wb"))
+        # Point trace dict instance variable to trace_dict we just built
+        self.trace_dict = trace_dict
+        self.trace_objs = trace_objs
 
     def _find_all_traces(self, targ_dir):
         '''
@@ -165,6 +216,9 @@ class TraceServer(object):
                 execution_states[current_state] += line
         # trace will store list of execution states as DorgCPU messages in the order in which they occurred
         trace = Trace()
+        trace.trial_id = ""
+        trace.env_id = ""
+        trace.trace_id = ""
         for state in execution_states:
             # These are the things I need to extract:
             #  - instr_head, read_head, write_head, stacks, active_stack, reg_AX, reg_BX, reg_CX, memory, environment buffer, input buffer, output, current_instruction
@@ -239,12 +293,31 @@ class TraceServer(object):
             # Create ROS message for DORG CPU
             dorg_cpu = StandardDorgCPU()
             dorg_cpu.instr_head = instr_head
-            # ...
+            dorg_cpu.read_head = read_head
+            dorg_cpu.write_head = write_head
+            dorg_cpu.stacks = stacks
+            dorg_cpu.active_stack = active_stack
+            dorg_cpu.reg_AX = registers["AX"]
+            dorg_cpu.reg_BX = registers["BX"]
+            dorg_cpu.reg_CX = registers["CX"]
+            dorg_cpu.memory = memory
+            dorg_cpu.environment_buffer = env_buffer
+            dorg_cpu.input_buffer = input_buffer
+            dorg_cpu.output = output
+            dorg_cpu.current_instruction = current_instruction
             # append current avidian state to trace
             trace.dorgs.append(dorg_cpu)
         return trace
 
+    def get_all_traces_handler(self, request):
+        '''
+        get_all_traces service handler
+        '''
+        response = GetAllTracesResponse()
+        response.traces = trace_objs
+        return response
 
 
 if __name__ == "__main__":
     tserve = TraceServer()
+    tserve.run()

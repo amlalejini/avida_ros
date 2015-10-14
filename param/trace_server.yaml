@@ -1,0 +1,2 @@
+trace_server:
+  force_extraction: False

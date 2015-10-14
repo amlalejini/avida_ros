@@ -5,7 +5,7 @@
   <group ns="dev">
     <!-- Load params -->
     <rosparam command="load" file="$(find avida_ros)/param/data_locs.yaml" />
-
+    <rosparam command="load" file="$(find avida_ros)/param/trace_server.yaml" />
     <!-- Launch nodes -->
     <node pkg="avida_ros" type="trace_server.py" output="screen" name="trace_server" />
   </group>
