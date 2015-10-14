@@ -1,0 +1,13 @@
+int32 instr_head
+int32 read_head
+int32 write_head
+int32[] stacks
+int32 active_stack
+int32 reg_AX
+int32 reg_BX
+int32 reg_CX
+string memory
+string[] environment_buffer
+string[] input_buffer
+string output
+string current_instruction
