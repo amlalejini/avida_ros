@@ -141,8 +141,6 @@ class TraceServer(object):
         trace_objs = []
         # Get trace locations from avida processed directory
         trace_list = self._find_all_traces(self.avida_processed_loc)
-        print self.trace_dump
-        print trace_list
         # Load them up and pickle 'em out
         for trace in trace_list:
             # Collect some information about our trace
@@ -162,7 +160,6 @@ class TraceServer(object):
             pickled = os.path.exists(os.path.join(self.trace_dump, trace + ".pickle"))
             # If pickle exists and not force_extract: load from pickle
             if pickled and not force_extract:
-                print("Load from pickle")
                 # Load from pickle!
                 with open(os.path.join(self.trace_dump, trace + ".pickle")) as fp:
                     trace_obj = pickle.load(fp)
@@ -170,7 +167,6 @@ class TraceServer(object):
                 trace_dict[trial_id][env_id][trace_id] = trace_obj
                 trace_objs.append(trace_obj)
             else:
-                print("Load from file")
                 # Load from file!
                 with open(os.path.join(self.avida_processed_loc, trace)) as fp:
                     trace_obj = self._extract_trace(fp)

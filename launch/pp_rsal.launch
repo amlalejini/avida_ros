@@ -11,24 +11,36 @@
   <group ns="treatment_1">
     <!-- Load trace server params -->
     <rosparam command="load" file="$(find avida_ros)/param/trace_server.yaml" />
+    <!-- Load genotype server parameters -->
+    <rosparam command="load" file="$(find avida_ros)/param/genotype_server.yaml" />
     <!-- Launch trace server node for treatment 1 -->
     <node pkg="avida_ros" type="trace_server.py" output="screen" name="trace_server" />
+    <!-- Launch genotype server node for treatment 1 -->
+    <node pkg="avida_ros" type="genotype_server.py" output="screen" name="genotype_server" />
   </group>
 
   <!-- Treatment 2 Group -->
   <group ns="treatment_2">
     <!-- Load trace server params -->
     <rosparam command="load" file="$(find avida_ros)/param/trace_server.yaml" />
+    <!-- Load genotype server parameters -->
+    <rosparam command="load" file="$(find avida_ros)/param/genotype_server.yaml" />
     <!-- Launch trace server node for treatment 2 -->
     <node pkg="avida_ros" type="trace_server.py" output="screen" name="trace_server" />
+    <!-- Launch genotype server node for treatment 2 -->
+    <node pkg="avida_ros" type="genotype_server.py" output="screen" name="genotype_server" />
   </group>
 
   <!-- Treatment 3 Group -->
   <group ns="treatment_3">
     <!-- Load trace server params -->
     <rosparam command="load" file="$(find avida_ros)/param/trace_server.yaml" />
+    <!-- Load genotype server parameters -->
+    <rosparam command="load" file="$(find avida_ros)/param/genotype_server.yaml" />
     <!-- Launch trace server node for treatment 3 -->
     <node pkg="avida_ros" type="trace_server.py" output="screen" name="trace_server" />
+    <!-- Launch genotype server node for treatment 2 -->
+    <node pkg="avida_ros" type="genotype_server.py" output="screen" name="genotype_server" />
   </group>
 
   <node pkg="avida_ros" type="analyze.py" name="RSaL_analysis" output="screen"/>

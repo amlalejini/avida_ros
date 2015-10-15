@@ -117,8 +117,6 @@ class GenotypeServer(object):
         genotype_objs = []
         # Get .gen locations from avida processed directory
         genotype_list = self._find_all_genotypes(self.avida_processed_loc)
-        print self.genotype_dump
-        print genotype_list
         # Load them up and pickle 'em out
         for genotype in genotype_list:
             # Collect some information about our genotype
@@ -136,7 +134,6 @@ class GenotypeServer(object):
             pickled = os.path.exists(os.path.join(self.genotype_dump, genotype + ".pickle"))
             # If pickle exists and not force extract: load from pickle
             if pickled and not force_extract:
-                print("G: Load from pickle")
                 # Load from pickle!
                 with open(os.path.join(self.genotype_dump, genotype + ".pickle")) as fp:
                     genotype_obj = pickle.load(fp)
@@ -144,7 +141,6 @@ class GenotypeServer(object):
                 genotype_dict[trial_id][genotype_id] = genotype_obj
                 genotype_objs.append(genotype_obj)
             else:
-                print("G: Load from file!")
                 # Load from file!
                 with open(os.path.join(self.avida_processed_loc, genotype)) as fp:
                     genotype_obj = self._extract_genotype(fp)

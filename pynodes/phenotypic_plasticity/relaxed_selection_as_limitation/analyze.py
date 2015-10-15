@@ -53,11 +53,6 @@ class analysis_node(object):
     def __init__(self):
         ##########################################
         # Instance variables for this class
-        # TODO: at some point, I want analysis scripts to be totally ignorant of file paths; they should just be working with datastructures
-        #   - something upstream should handle all of the actual data parsing/extraction
-        self.t1_avida_processed_loc = None  # Location of data from avida analyze mode
-        self.t2_avida_processed_loc = None
-        self.t3_avida_processed_loc = None
         self.dataspace_loc = None           # Location of dataspace
         self.analysis_dump = None           # Location of experiment structure (save file) relative to dataspace_loc
         self.treatments = None              # List of treatments
