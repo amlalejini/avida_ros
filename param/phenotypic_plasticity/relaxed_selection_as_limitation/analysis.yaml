@@ -1,0 +1,12 @@
+# General experiment parameters
+experiment:
+  desc: Blah.
+  # List of treatments
+  treatments: [treatment_1, treatment_2, treatment_3]
+  # Treatment specific params
+  treatment_1:
+      desc: Blah.
+  treatment_2:
+      desc: Blah.
+  treatment_3:
+      desc: Blah.

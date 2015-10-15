@@ -1,0 +1,14 @@
+<launch>
+  <!-- This launch file is used for launching RSaL to PP analysis -->
+
+  <!-- Load everything in dev namespace -->
+  <group ns="dev">
+    <!-- Load params -->
+    <rosparam command="load" file="$(find avida_ros)/param/data_locs.yaml" />
+    <rosparam command="load" file="$(find avida_ros)/param/trace_server.yaml" />
+    <rosparam command="load" file="$(find avida_ros)/param/phenotypic_plasticity/relaxed_selection_as_limitation/analysis.yaml" />
+    <!-- Launch nodes -->
+    <node pkg="avida_ros" type="trace_server.py" output="screen" name="trace_server" />
+  </group>
+
+</launch>

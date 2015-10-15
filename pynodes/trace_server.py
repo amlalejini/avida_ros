@@ -166,7 +166,7 @@ class TraceServer(object):
                     trace_obj = pickle.load(fp)
                 # Store it in trace dict
                 trace_dict[trial_id][env_id][trace_id] = trace_obj
-                trace_obj.append(trace_obj)
+                trace_objs.append(trace_obj)
             else:
                 print("Load from file")
                 # Load from file!

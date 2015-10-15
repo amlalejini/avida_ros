@@ -1,3 +1,4 @@
+# Example trace server param list (these are required for each trace server instance)
 avida_raw: ~/Desktop/testing_aros/avida_raw
 avida_processed: ~/Desktop/testing_aros/avida_processed
 avida_ros_dataspace:
