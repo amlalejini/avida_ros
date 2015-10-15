@@ -6,8 +6,11 @@
     <!-- Load params -->
     <rosparam command="load" file="$(find avida_ros)/param/data_locs.yaml" />
     <rosparam command="load" file="$(find avida_ros)/param/trace_server.yaml" />
+    <rosparam command="load" file="$(find avida_ros)/param/genotype_server.yaml" />
     <!-- Launch nodes -->
     <node pkg="avida_ros" type="trace_server.py" output="screen" name="trace_server" />
+    <node pkg="avida_ros" type="genotype_server.py" output="screen" name="genotype_server" />
+
   </group>
 
 </launch>

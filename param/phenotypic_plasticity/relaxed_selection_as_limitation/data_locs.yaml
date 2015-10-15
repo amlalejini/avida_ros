@@ -1,3 +1,8 @@
+# Analysis params
+analysis:
+  dataspace:
+    base_loc: ~/Desktop/testing_aros/dataspace
+    analysis_dump: analysis_data
 # Params for 3 trace servers: one for each treatment
 treatment_1:
   avida_processed: ~/Desktop/testing_aros/avida_processed/setup_1/analysis

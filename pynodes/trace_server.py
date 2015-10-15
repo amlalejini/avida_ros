@@ -40,7 +40,6 @@ class TraceServer(object):
         self.avida_processed_loc = None     # Location of processed avida data (from avida analyze)
         self.dataspace_loc = None           # Location of ros avida dataspace
         self.trace_dump = None              # Location of trace dump (in dataspace)
-        self.trace_list = None              # List of loaded traces
         self.trace_dict = None
         self.trace_objs = None
         self.get_all_traces_srv = None
@@ -141,9 +140,11 @@ class TraceServer(object):
         trace_dict = {}
         trace_objs = []
         # Get trace locations from avida processed directory
-        self.trace_list = self._find_all_traces(self.avida_processed_loc)
+        trace_list = self._find_all_traces(self.avida_processed_loc)
+        print self.trace_dump
+        print trace_list
         # Load them up and pickle 'em out
-        for trace in self.trace_list:
+        for trace in trace_list:
             # Collect some information about our trace
             try:
                 tname_split = trace.split("/")
@@ -156,6 +157,7 @@ class TraceServer(object):
             if trial_id not in trace_dict: trace_dict[trial_id] = {}
             if env_id not in trace_dict[trial_id]: trace_dict[trial_id][env_id] = {}
             if trace_id not in trace_dict[trial_id][env_id]: trace_dict[trial_id][env_id][trace_id] = None
+
             # Check to see if we already have a pickle of the trace object
             pickled = os.path.exists(os.path.join(self.trace_dump, trace + ".pickle"))
             # If pickle exists and not force_extract: load from pickle
@@ -175,7 +177,7 @@ class TraceServer(object):
                     trace_obj.trial_id = trial_id
                     trace_obj.env_id = env_id
                     trace_obj.trace_id = trace_id
-                # store it (will want to store as dictionary after getting stuff working)
+                # store it (not sure which of these structures I'll eventually settle on)
                 trace_dict[trial_id][env_id][trace_id] = trace_obj
                 trace_objs.append(trace_obj)
                 # save it out!

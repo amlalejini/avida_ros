@@ -49,6 +49,7 @@ add_message_files(
  FILES
  StandardDorgCPU.msg
  Trace.msg
+ Genotype.msg
 )
 
 ## Generate services in the 'srv' folder
