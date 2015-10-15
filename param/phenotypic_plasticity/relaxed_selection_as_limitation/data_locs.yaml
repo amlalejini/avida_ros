@@ -1,19 +1,16 @@
 # Params for 3 trace servers: one for each treatment
 treatment_1:
-  avida_raw: ~/Desktop/testing_aros/avida_raw
-  avida_processed: ~/Desktop/testing_aros/avida_processed
+  avida_processed: ~/Desktop/testing_aros/avida_processed/setup_1/analysis
   avida_ros_dataspace:
     base_loc: ~/Desktop/testing_aros/dataspace
-    trace_dump: trace_dump
+    trace_dump: t1_trace_dump
 treatment_2:
-  avida_raw: ~/Desktop/testing_aros/avida_raw
-  avida_processed: ~/Desktop/testing_aros/avida_processed
+  avida_processed: ~/Desktop/testing_aros/avida_processed/setup_2/analysis
   avida_ros_dataspace:
     base_loc: ~/Desktop/testing_aros/dataspace
-    trace_dump: trace_dump
+    trace_dump: t2_trace_dump
 treatment_3:
-  avida_raw: ~/Desktop/testing_aros/avida_raw
-  avida_processed: ~/Desktop/testing_aros/avida_processed
+  avida_processed: ~/Desktop/testing_aros/avida_processed/setup_3/analysis
   avida_ros_dataspace:
     base_loc: ~/Desktop/testing_aros/dataspace
-    trace_dump: trace_dump
+    trace_dump: t3_trace_dump

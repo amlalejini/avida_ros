@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rospy
 
 '''
@@ -49,7 +51,8 @@ class Trial(object):
 class analysis_node(object):
 
     def __init__(self):
-        rospy.init("RSaL_analysis")
+        rospy.init_node("RSaL_analysis")
+        print("BLLLLLLAAAAAAH")
 
 if __name__ == "__main__":
     anode = analysis_node()

@@ -1,5 +1,5 @@
 <launch>
-  <!-- This launch file is used for dev purposes -->
+  <!-- This launch file is used for launching RSaL to PP analysis -->
 
   <!-- Load everything in dev namespace -->
   <group ns="dev">

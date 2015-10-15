@@ -1,3 +1,5 @@
+# Should we force experiment to rebuild from data? If True: always rebuild. If False: if there's a previously generated pickle save of experiment, use that.
+force_exp_rebuild: True
 # General experiment parameters
 experiment:
   desc: Blah.
