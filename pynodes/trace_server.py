@@ -2,8 +2,8 @@
 
 import rospy, os, re
 import cPickle as pickle
-from avida_ros.msg import StandardDorgCPU, Trace
-from avida_ros.srv import GetAllTraces
+from avida_ros.msg import StandardDorgCPU, Trace, Stack
+from avida_ros.srv import GetAllTraces, GetAllTracesResponse, GetAllTracesRequest
 
 class TraceServer(object):
     '''
@@ -255,14 +255,14 @@ class TraceServer(object):
             # get stacks
             m = re.findall(pattern = "Stack\s\d+:\s.*\n", string = state)
             #  - allocate space for found stacks
-            stacks = [None for i in xrange(0, len(m))]
+            stacks = [Stack() for i in xrange(0, len(m))]
             #  - for each stack matched in the chunk,
             for stk in m:
                 # get and set the stack id number
                 stk_m = re.search(pattern = "Stack\s(\d+):", string = stk)
                 stk_id = int(stk_m.group(1))
                 # populate the correct stack with the data extracted from the trace
-                stacks[stk_id] = stk.split(":")[-1].strip().split(" ")
+                stacks[stk_id].stack = stk.split(":")[-1].strip().split(" ")
             # get active stack
             m = re.search(pattern = "\*\sStack\s(\d+):", string = state)
             active_stack = int(m.group(1))
@@ -288,8 +288,7 @@ class TraceServer(object):
             # get output
             m = re.search(pattern = "Output:\s*(\w*)\n", string = state)
             buff = m.group(1).strip()
-            output = buff if buff != "" else None
-
+            output = buff if buff != "" else str(None)
             #########################################
             # Create ROS message for DORG CPU
             dorg_cpu = StandardDorgCPU()
@@ -315,7 +314,7 @@ class TraceServer(object):
         get_all_traces service handler
         '''
         response = GetAllTracesResponse()
-        response.traces = trace_objs
+        response.traces = self.trace_objs
         return response
 
 

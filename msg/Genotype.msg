@@ -15,4 +15,4 @@ int16 executed_size
 string offspring
 string[] tasks
 int32[] task_cnts
-string genome
+string[] genome

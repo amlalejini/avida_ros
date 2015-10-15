@@ -2,6 +2,7 @@
 import rospy, os, re
 import cPickle as pickle
 from avida_ros.msg import Genotype
+from avida_ros.srv import GetAllGenotypes, GetAllGenotypesResponse, GetAllGenotypesRequest
 
 class GenotypeServer(object):
     '''
@@ -39,6 +40,23 @@ class GenotypeServer(object):
         # Load/Extract genotypes (populate genotype list, genotype dictionary, genotype_objs list)
         self._load_genotypes(force_extract = force_extraction)
         ##########################################
+        # Setup services available to other ROS nodes
+        self.get_all_genotypes_srv = rospy.Service("get_all_genotypes", GetAllGenotypes, self.get_all_genotypes_handler)
+
+    def get_all_genotypes_handler(self, request):
+        '''
+        get_all_genotypes service handler
+        '''
+        response = GetAllGenotypesResponse()
+        response.genotypes = self.genotype_objs
+        return response
+
+    def run(self):
+        '''
+        Genotype server run loop
+        '''
+        rospy.loginfo("Genotypes loaded successfully. Listening for requests.")
+        rospy.spin()
 
     def _clean_params(self):
         '''
@@ -231,3 +249,4 @@ class GenotypeServer(object):
 
 if __name__ == "__main__":
     gserver = GenotypeServer()
+    gserver.run()

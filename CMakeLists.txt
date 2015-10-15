@@ -47,6 +47,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
  FILES
+ Stack.msg
  StandardDorgCPU.msg
  Trace.msg
  Genotype.msg
@@ -56,6 +57,7 @@ add_message_files(
 add_service_files(
   FILES
   GetAllTraces.srv
+  GetAllGenotypes.srv
 )
 
 ## Generate actions in the 'action' folder

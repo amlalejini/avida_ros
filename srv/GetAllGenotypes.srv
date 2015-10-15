@@ -1,4 +1,4 @@
 # Request (empty)
 ---
 # Response
-Trace[] traces      # Traces 
+Genotype[] genotypes
