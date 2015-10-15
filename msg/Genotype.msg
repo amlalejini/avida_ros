@@ -6,6 +6,7 @@ string genotype_id
 # Genotype Data
 int32 generation
 float64 merit
+int32 generation_length
 float64 fitness
 int16 errors
 int16 genome_size

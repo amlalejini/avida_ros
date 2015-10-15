@@ -160,7 +160,74 @@ class GenotypeServer(object):
         '''
         Given file pointer: extract and return genotype message object
         '''
-        return Genotype()
+        msg = Genotype()
+        ################################
+        # Chunk file data for parsing
+        content_chunk = ""
+        task_chunk = ""
+        genome_chunk = ""
+        state = "content"
+        for line in fp:
+            if state == "content":
+                # Transition?
+                if "# Tasks Performed:" in line:
+                    state = "tasks"
+                    continue
+                # No transition: add line to content chunk
+                content_chunk += line
+            elif state == "tasks":
+                # Transition?
+                if line.strip() == "":
+                    state = "genome"
+                    continue
+                # No transition: add line to tasks chunk
+                task_chunk += line
+            elif state == "genome":
+                if line.strip() == "": continue
+                genome_chunk += line
+        ################################
+        # Parse Genome
+        msg.genome = genome_chunk.strip().split("\n")
+        ################################
+        # Parse tasks and task counts
+        m = re.findall(pattern = "#\s([a-zA-Z]+)\s([0-9]+)\s.*\n", string = task_chunk)
+        msg.tasks = []
+        msg.task_cnts = []
+        for task in m:
+            # Get task name
+            msg.tasks.append(task[0])
+            msg.task_cnts.append(int(task[1]))
+        ################################
+        # Parse Content Chunk (random crap at top of file)
+        # Find generation
+        m = re.search(pattern = "#\sGeneration\.*:\s(-?[0-9]+)\n", string = content_chunk)
+        msg.generation = int(m.group(1))
+        # Find merit
+        m = re.search(pattern = "#\sMerit\.*:\s([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)", string = content_chunk)
+        msg.merit = float(m.group(1))
+        # Find Generation Length (Gestation Time)
+        m = re.search(pattern = "#\sGestation\sTime\.*:\s([0-9]+)", string = content_chunk)
+        msg.generation_length = int(m.group(1))
+        # Find Fitness
+        m = re.search(pattern = "#\sFitness\.*:\s([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)", string = content_chunk)
+        msg.fitness = float(m.group(1))
+        # Find errors
+        m = re.search(pattern = "#\sErrors\.*:\s([0-9]+)", string = content_chunk)
+        msg.errors = int(m.group(1))
+        # Find genome size
+        m = re.search(pattern = "#\sGenome\sSize\.*:\s([0-9]+)", string = content_chunk)
+        msg.genome_size = int(m.group(1))
+        # Find copied size
+        m = re.search(pattern = "#\sCopied\sSize\.*:\s([0-9]+)", string = content_chunk)
+        msg.copied_size = int(m.group(1))
+        # Find executed size
+        m = re.search(pattern = "#\sExecuted\sSize\.*:\s([0-9]+)", string = content_chunk)
+        msg.executed_size = int(m.group(1))
+        # Find offspring
+        m = re.search(pattern = "#\sOffspring\.*:\s(.*)", string = content_chunk)
+        msg.offspring = str(m.group(1))
+        # Return the msg that we built
+        return msg
 
 if __name__ == "__main__":
     gserver = GenotypeServer()

@@ -206,7 +206,6 @@ class TraceServer(object):
         '''
         Given file pointer to trace file, extract and return trace.
         '''
-
         execution_states = []  # Stores chunks of file content.  Each chunk corresponds to one execution state.
         # Extract digital organism hardware states string chunks from trace file
         current_state = -1
