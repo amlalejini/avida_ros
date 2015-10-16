@@ -123,6 +123,13 @@ class analysis_node(object):
         # Load/build experiment
         self._load_experiment(force_build, exp_desc, exp_id, treatments, treatment_info)
 
+    def run(self):
+        '''
+        This is the analysis run function.
+        Here is where we should output visualizations, etc. using the experiment data structure.
+        '''
+        pass
+
     def _clean_params(self):
         '''
         Calling this cleans/processes params loaded from parameter server.
@@ -167,8 +174,10 @@ class analysis_node(object):
         # Check to see if a pickle already exists
         pickled = os.path.exists(os.path.join(self.analysis_dump, "experiment.pickle"))
         if not force_build and pickled:
+            print("Load from pickle")
             # Load from pickle
-            print("Load from pickle.")
+            with open(os.path.join(self.analysis_dump, "experiment.pickle")) as fp:
+                self.experiment = pickle.load(fp)
         else:
             # Extract from servers
             print("Load from servers.")
@@ -177,11 +186,8 @@ class analysis_node(object):
             # Populate descriptive fields
             experiment.id = experiment_id
             experiment.desc = experiment_description
-
             # Populate treatments with treatments
             # Also, get all traces and genotypes (by treatment) from servers
-            traces_by_treatment = {}
-            genotypes_by_treatment = {}
             for treatment in treatments:
                 treatment_id = treatment_info[treatment]["id"]
                 treatment_desc = treatment_info[treatment]["desc"]
@@ -190,13 +196,14 @@ class analysis_node(object):
                 genotypes = self.get_all_genotypes_services[treatment]().genotypes
                 # Build treatment
                 experiment.treatments[treatment] = self._build_treatment(treatment_id, treatment_desc, traces, genotypes)
+            # Save out experiment as pickle
+            self.experiment = experiment
+            pickle.dump(experiment, open(os.path.join(self.analysis_dump, "experiment.pickle"), "wb"))
 
     def _build_treatment(self, id, description, traces, genotypes):
         '''
         Given treatment ID, description, list of traces, and list of genotypes, build and return a treatment struct
         '''
-        print("###############################")
-        print("BUILDING: " + str(id))
         treatment = Treatment()
         # Populate ID field
         treatment.id = id
@@ -219,12 +226,21 @@ class analysis_node(object):
         # for each trial...build trial (where to get trial list)
         # Make sure genotype trials and trace trials match (not actually doing any verification here...)
         trials = list(set(genotypes_by_trial.keys() + traces_by_trial.keys()))
+        plasticity_cnt = 0
+        static_cnt = 0
+        dynamic_cnt = 0
         for trial in trials:
             treatment.trials[trial] = self._build_trial(trial_id = trial, treatment_id = treatment.id, environments = treatment.environments, genotypes = genotypes_by_trial[trial], traces = traces_by_trial[trial])
-        # Populate treatment metrics
-        # Calc total plastic
-        # Calc total static
-        # Calc total dynamic
+            # Update plasticity counts
+            if treatment.trials[trial].is_plastic:
+                 plasticity_cnt += 1
+                 if treatment.trials[trial].plasticity_type == "STATIC": static_cnt += 1
+                 if treatment.trials[trial].plasticity_type == "DYNAMIC": dynamic_cnt += 1
+        # Populate treatment stats
+        treatment.total_plastic = plasticity_cnt
+        treatment.total_static = static_cnt
+        treatment.total_dynamic = dynamic_cnt
+
         return treatment
 
     def _build_trial(self, trial_id, treatment_id, environments, genotypes, traces):
@@ -342,3 +358,4 @@ class analysis_node(object):
 
 if __name__ == "__main__":
     anode = analysis_node()
+    anode.run()

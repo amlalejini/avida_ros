@@ -1,2 +1,2 @@
 genotype_server:
-  force_extraction: True
+  force_extraction: False
