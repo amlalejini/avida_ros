@@ -2,17 +2,17 @@
 force_exp_rebuild: True
 # General experiment parameters
 experiment:
-  desc: Blah.
-  id: Bleh.
+  desc: Relaxed Selection as Limitation to Evolution of Phenotypic Plasticity
+  id: PP/RSaL
   # List of treatments
   treatments: [treatment_1, treatment_2, treatment_3]
   # Treatment specific params
   treatment_1:
-      id: Bleh1
-      desc: Blah.
+      id: treatment_1
+      desc: Nand+Not-/Nand-Not+
   treatment_2:
-      id: bleh2
-      desc: Blah.
+      id: treatment_2
+      desc: Nand+Not~/Nand~Not+
   treatment_3:
-      id: bleh3
-      desc: Blah.
+      id: treatment_3
+      desc: Nand+Not+
