@@ -128,7 +128,9 @@ class analysis_node(object):
         This is the analysis run function.
         Here is where we should output visualizations, etc. using the experiment data structure.
         '''
-        pass
+        print(self.experiment.treatments.keys())
+        print(self.experiment.treatments["treatment_1"].trials.keys())
+        print(self.experiment.treatments["treatment_1"].trials["single_runs_1"].traces.keys())
 
     def _clean_params(self):
         '''
@@ -260,12 +262,14 @@ class analysis_node(object):
             env = trace.env_id.split("_")[1]
             if not env in traces_by_env: traces_by_env[env] = []
             traces_by_env[env] = trace
+        trial.traces = traces_by_env
         # Populate genotypes by environment
         genotypes_by_env = {}
         for genotype in genotypes:
             # Environment?
             env = genotype.genotype_id.split("_")[-1].split(".")[0]
             genotypes_by_env[env] = genotype
+        trial.genotypes = genotypes_by_env
         # Populate trial metrics
         # - is_plastic, plasticity_type, fitness by env, avg fitness across environments dorg evolved in
         # - generation length
