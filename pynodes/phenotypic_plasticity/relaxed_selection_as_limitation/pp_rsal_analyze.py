@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import rospy, os, re
+import rospy, os, re, math
 import cPickle as pickle
 from avida_ros.srv import GetAllGenotypes, GetAllTraces
 
@@ -65,7 +65,7 @@ class Trial(object):
         self.plasticity_type = None
         self.trace_deviation = None
         self.fitness = {}       # Fitness by environment
-        self.avg_incubator_fitness = None # Fitness avged across environments that the organism evolved in
+        self.avg_incubator_log_fitness = None # Fitness avged across environments that the organism evolved in
         self.generation_length = {} # Generation length by environment
         self.task_distribution = {} # Task distribution by environment
 
@@ -128,9 +128,33 @@ class analysis_node(object):
         This is the analysis run function.
         Here is where we should output visualizations, etc. using the experiment data structure.
         '''
+        summary = "" # This will keep track of human readable summary of data
         print(self.experiment.treatments.keys())
-        print(self.experiment.treatments["treatment_1"].trials.keys())
-        print(self.experiment.treatments["treatment_1"].trials["single_runs_1"].traces.keys())
+        for treatment_key in self.experiment.treatments:
+            treatment = self.experiment.treatments[treatment_key]
+            # Build our treatment overview output summary!
+            summary += "###########################################################################\n"
+            summary += "Treatment: %s\n" % treatment.id
+            summary += "Treatment Description: %s\n" % treatment.desc
+            summary += "Total Plastic: %d/%d\n" % (treatment.total_plastic, len(treatment.trials))
+            summary += "Total Dynamic: %d/%d\n" % (treatment.total_dynamic, len(treatment.trials))
+            summary += "Total Static: %d/%d\n" % (treatment.total_static, len(treatment.trials))
+            for trial_key in treatment.trials:
+                trial = treatment.trials[trial_key]
+                # Build trial output summary
+                summary += "=======================================================\n"
+                summary += "Trial: %s\n" % trial.id
+                summary += "Task Distribution: %s\n" % str(trial.task_distribution)
+                summary += "Fitness Distribution: %s\n" % str(trial.fitness)
+                summary += "Average Incubator Log Fitness: %f\n" % trial.avg_incubator_log_fitness
+                summary += "Generation Length: %s\n" % str(trial.generation_length)
+                summary += "Is Plastic: %s\n" % str(trial.is_plastic)
+                summary += "Plasticity Type: %s\n" % trial.plasticity_type
+        # Write summary out to file
+        summary_loc = os.path.join(self.analysis_dump, "exp_summary.txt")
+        with open(summary_loc, "w") as fp:
+            fp.write(summary)
+        print("Done.")
 
     def _clean_params(self):
         '''
@@ -299,11 +323,11 @@ class analysis_node(object):
             trial.task_distribution[env] = {genotypes_by_env[env].tasks[i]: genotypes_by_env[env].task_cnts[i] for i in xrange(0, len(genotypes_by_env[env].tasks))}
         # Avg fitness across incubator environments
         if treatment_id == "treatment_1":
-            trial.avg_incubator_fitness = 0.5 * (trial.fitness["nand+not-"] + trial.fitness["nand-not+"])
+            trial.avg_incubator_log_fitness = 0.5 * (math.log(trial.fitness["nand+not-"], 2) + math.log(trial.fitness["nand-not+"], 2))
         elif treatment_id == "treatment_2":
-            trial.avg_incubator_fitness = 0.5 * (trial.fitness["nand+not~"] + trial.fitness["nand~not+"])
+            trial.avg_incubator_log_fitness = 0.5 * (math.log(trial.fitness["nand+not~"], 2) + math.log(trial.fitness["nand~not+"], 2))
         elif treatment_id == "treatment_3":
-            trial.avg_incubator_fitness = trial.fitness["nand+not+"]
+            trial.avg_incubator_log_fitness = math.log(trial.fitness["nand+not+"], 2)
         # print("=============================")
         # print("BUILDING TRIAL")
         # print("Trial ID: " + str(trial.id))

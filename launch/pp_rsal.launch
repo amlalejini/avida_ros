@@ -43,6 +43,6 @@
     <node pkg="avida_ros" type="genotype_server.py" output="screen" name="genotype_server" />
   </group>
 
-  <node pkg="avida_ros" type="analyze.py" name="RSaL_analysis" output="screen"/>
+  <node pkg="avida_ros" type="pp_rsal_analyze.py" name="RSaL_analysis" output="screen"/>
 
 </launch>

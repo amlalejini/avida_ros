@@ -1,24 +1,24 @@
 # Analysis params
 analysis:
   dataspace:
-    base_loc: ~/Desktop/testing_aros/dataspace
+    base_loc: /media/psf/Dropbox/Library/Michigan_State_University/Avida_Experiment_Data/phenotypic_plasticity/relaxed_selection_as_limitation/exp_analysis
     analysis_dump: analysis_data
 # Params for 3 trace servers: one for each treatment
 treatment_1:
-  avida_processed: ~/Desktop/testing_aros/avida_processed/setup_1/analysis
+  avida_processed: /media/psf/Dropbox/Library/Michigan_State_University/Avida_Experiment_Data/phenotypic_plasticity/relaxed_selection_as_limitation/setup_1/analysis
   avida_ros_dataspace:
-    base_loc: ~/Desktop/testing_aros/dataspace
+    base_loc: /media/psf/Dropbox/Library/Michigan_State_University/Avida_Experiment_Data/phenotypic_plasticity/relaxed_selection_as_limitation/exp_analysis
     trace_dump: t1_trace_dump
     genotype_dump: t1_genotype_dump
 treatment_2:
-  avida_processed: ~/Desktop/testing_aros/avida_processed/setup_2/analysis
+  avida_processed: /media/psf/Dropbox/Library/Michigan_State_University/Avida_Experiment_Data/phenotypic_plasticity/relaxed_selection_as_limitation/setup_2/analysis
   avida_ros_dataspace:
-    base_loc: ~/Desktop/testing_aros/dataspace
+    base_loc: /media/psf/Dropbox/Library/Michigan_State_University/Avida_Experiment_Data/phenotypic_plasticity/relaxed_selection_as_limitation/exp_analysis
     trace_dump: t2_trace_dump
     genotype_dump: t2_genotype_dump
 treatment_3:
-  avida_processed: ~/Desktop/testing_aros/avida_processed/setup_3/analysis
+  avida_processed: /media/psf/Dropbox/Library/Michigan_State_University/Avida_Experiment_Data/phenotypic_plasticity/relaxed_selection_as_limitation/setup_3/analysis
   avida_ros_dataspace:
-    base_loc: ~/Desktop/testing_aros/dataspace
+    base_loc: /media/psf/Dropbox/Library/Michigan_State_University/Avida_Experiment_Data/phenotypic_plasticity/relaxed_selection_as_limitation/exp_analysis
     trace_dump: t3_trace_dump
     genotype_dump: t3_genotype_dump
