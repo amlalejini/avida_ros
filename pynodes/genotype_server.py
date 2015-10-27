@@ -3,6 +3,7 @@ import rospy, os, re
 import cPickle as pickle
 from avida_ros.msg import Genotype
 from avida_ros.srv import GetAllGenotypes, GetAllGenotypesResponse, GetAllGenotypesRequest
+from avida_ros.srv import ShutdownRequest, ShutdownRequestResponse, ShutdownRequestRequest
 
 class GenotypeServer(object):
     '''
@@ -19,6 +20,7 @@ class GenotypeServer(object):
         self.genotype_dict = None           # Organized dictionary of genotype message objects extracted
         self.genotype_objs = None           # List of genotype message objects extracted
         self.get_all_genotypes_srv = None
+        self.shutdown_srv = None
         ##########################################
         # Initialize as ROS node
         rospy.init_node("GenotypeServer")
@@ -41,6 +43,7 @@ class GenotypeServer(object):
         self._load_genotypes(force_extract = force_extraction)
         ##########################################
         # Setup services available to other ROS nodes
+        self.shutdown_srv = rospy.Service("shutdown_genotype_server", ShutdownRequest, self.shutdown_request_handler)
         self.get_all_genotypes_srv = rospy.Service("get_all_genotypes", GetAllGenotypes, self.get_all_genotypes_handler)
 
     def get_all_genotypes_handler(self, request):
@@ -50,6 +53,14 @@ class GenotypeServer(object):
         response = GetAllGenotypesResponse()
         response.genotypes = self.genotype_objs
         return response
+
+    def shutdown_request_handler(self, request):
+        '''
+        This function handles shutdown service requests
+        '''
+        rospy.loginfo("Handling shutdown request from %s" % request.source)
+        rospy.signal_shutdown("Shutdown request received.")
+        return ShutdownRequestResponse()
 
     def run(self):
         '''

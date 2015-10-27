@@ -3,6 +3,7 @@
 import rospy, os, re, math
 import cPickle as pickle
 from avida_ros.srv import GetAllGenotypes, GetAllTraces
+from avida_ros.srv import ShutdownRequest, ShutdownRequestResponse, ShutdownRequestRequest
 
 '''
 This module implements the analysis for the PhenotypicPlasticity/RelaxedSelectionAsLimitation Project
@@ -65,6 +66,7 @@ class Trial(object):
         self.plasticity_type = None
         self.trace_deviation = None
         self.fitness = {}       # Fitness by environment
+        self.log_fitness = {}   # Log Fitness by environment
         self.avg_incubator_log_fitness = None # Fitness avged across environments that the organism evolved in
         self.generation_length = {} # Generation length by environment
         self.task_distribution = {} # Task distribution by environment
@@ -112,14 +114,14 @@ class analysis_node(object):
             exit(-1)
         ##########################################
         # Setup services for each treatment
+        pickled = os.path.exists(os.path.join(self.analysis_dump, "experiment.pickle"))
         for treatment in treatments:
             srv_name = "%s/get_all_traces" % treatment
-            rospy.wait_for_service(srv_name)
+            if force_build or not pickled: rospy.wait_for_service(srv_name)
             self.get_all_traces_services[treatment] = rospy.ServiceProxy(srv_name, GetAllTraces)
             srv_name = "%s/get_all_genotypes" % treatment
-            rospy.wait_for_service(srv_name)
+            if force_build or not pickled: rospy.wait_for_service(srv_name)
             self.get_all_genotypes_services[treatment] = rospy.ServiceProxy(srv_name, GetAllGenotypes)
-        ##########################################
         # Load/build experiment
         self._load_experiment(force_build, exp_desc, exp_id, treatments, treatment_info)
 
@@ -128,6 +130,8 @@ class analysis_node(object):
         This is the analysis run function.
         Here is where we should output visualizations, etc. using the experiment data structure.
         '''
+
+
         summary = "" # This will keep track of human readable summary of data
         print(self.experiment.treatments.keys())
         for treatment_key in self.experiment.treatments:
@@ -146,6 +150,7 @@ class analysis_node(object):
                 summary += "Trial: %s\n" % trial.id
                 summary += "Task Distribution: %s\n" % str(trial.task_distribution)
                 summary += "Fitness Distribution: %s\n" % str(trial.fitness)
+                summary += "Log Fitness Distribution: %s\n" % str(trial.log_fitness)
                 summary += "Average Incubator Log Fitness: %f\n" % trial.avg_incubator_log_fitness
                 summary += "Generation Length: %s\n" % str(trial.generation_length)
                 summary += "Is Plastic: %s\n" % str(trial.is_plastic)
@@ -207,6 +212,8 @@ class analysis_node(object):
         else:
             # Extract from servers
             print("Load from servers.")
+
+            ##########################################
             # Made new experiment struct
             experiment = Experiment()
             # Populate descriptive fields
@@ -215,16 +222,23 @@ class analysis_node(object):
             # Populate treatments with treatments
             # Also, get all traces and genotypes (by treatment) from servers
             for treatment in treatments:
+                # trace_shutdown_srv = rospy.ServiceProxy("%s/shutdown_trace_server" % treatment, ShutdownRequest)
+                # genotype_shutdown_srv = rospy.ServiceProxy("%s/shutdown_genotype_server" % treatment, ShutdownRequest)
+
                 treatment_id = treatment_info[treatment]["id"]
                 treatment_desc = treatment_info[treatment]["desc"]
                 # Ask servers for all traces/genotypes for this treatment
                 traces = self.get_all_traces_services[treatment]().traces
+                #trace_shutdown_srv("pp rsal")
                 genotypes = self.get_all_genotypes_services[treatment]().genotypes
+                #genotype_shutdown_srv("pp rsal")
+
                 # Build treatment
                 experiment.treatments[treatment] = self._build_treatment(treatment_id, treatment_desc, traces, genotypes)
+                #pickle.dump(self._build_treatment(treatment_id, treatment_desc, traces, genotypes), open(os.path.join(self.analysis_dump, "%s.pickle" % treatment_id), "wb"))
             # Save out experiment as pickle
             self.experiment = experiment
-            pickle.dump(experiment, open(os.path.join(self.analysis_dump, "experiment.pickle"), "wb"))
+            #pickle.dump(experiment, open(os.path.join(self.analysis_dump, "experiment.pickle"), "wb"))
 
     def _build_treatment(self, id, description, traces, genotypes):
         '''
@@ -319,15 +333,16 @@ class analysis_node(object):
         # Fitness by environment & generation length by environment & task distribution by environment
         for env in genotypes_by_env:
             trial.fitness[env] = genotypes_by_env[env].fitness
+            trial.log_fitness[env] = 0 if trial.fitness[env] == 0 else math.log(trial.fitness[env], 2)
             trial.generation_length[env] = genotypes_by_env[env].generation_length
             trial.task_distribution[env] = {genotypes_by_env[env].tasks[i]: genotypes_by_env[env].task_cnts[i] for i in xrange(0, len(genotypes_by_env[env].tasks))}
         # Avg fitness across incubator environments
         if treatment_id == "treatment_1":
-            trial.avg_incubator_log_fitness = 0.5 * (math.log(trial.fitness["nand+not-"], 2) + math.log(trial.fitness["nand-not+"], 2))
+            trial.avg_incubator_log_fitness = 0.5 * (trial.log_fitness["nand+not-"] + trial.log_fitness["nand-not+"])
         elif treatment_id == "treatment_2":
-            trial.avg_incubator_log_fitness = 0.5 * (math.log(trial.fitness["nand+not~"], 2) + math.log(trial.fitness["nand~not+"], 2))
+            trial.avg_incubator_log_fitness = 0.5 * (trial.log_fitness["nand+not~"] + trial.log_fitness["nand~not+"])
         elif treatment_id == "treatment_3":
-            trial.avg_incubator_log_fitness = math.log(trial.fitness["nand+not+"], 2)
+            trial.avg_incubator_log_fitness = trial.log_fitness["nand+not+"]
         # print("=============================")
         # print("BUILDING TRIAL")
         # print("Trial ID: " + str(trial.id))

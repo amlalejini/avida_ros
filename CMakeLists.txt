@@ -58,6 +58,7 @@ add_service_files(
   FILES
   GetAllTraces.srv
   GetAllGenotypes.srv
+  ShutdownRequest.srv
 )
 
 ## Generate actions in the 'action' folder

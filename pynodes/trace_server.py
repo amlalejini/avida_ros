@@ -4,6 +4,7 @@ import rospy, os, re
 import cPickle as pickle
 from avida_ros.msg import StandardDorgCPU, Trace, Stack
 from avida_ros.srv import GetAllTraces, GetAllTracesResponse, GetAllTracesRequest
+from avida_ros.srv import ShutdownRequest, ShutdownRequestResponse, ShutdownRequestRequest
 
 class TraceServer(object):
     '''
@@ -43,6 +44,7 @@ class TraceServer(object):
         self.trace_dict = None
         self.trace_objs = None
         self.get_all_traces_srv = None
+        self.shutdown_srv = None
         ##########################################
         # Initialize as ROS node
         rospy.init_node("TraceServer")
@@ -65,7 +67,9 @@ class TraceServer(object):
         self._load_traces(force_extract = force_extraction)
         ##########################################
         # Setup services available to other ROS nodes
+        self.shutdown_srv = rospy.Service("shutdown_trace_server", ShutdownRequest, self.shutdown_request_handler)
         self.get_all_traces_srv = rospy.Service("get_all_traces", GetAllTraces, self.get_all_traces_handler)
+
 
     def run(self):
         '''
@@ -164,7 +168,7 @@ class TraceServer(object):
                 with open(os.path.join(self.trace_dump, trace + ".pickle")) as fp:
                     trace_obj = pickle.load(fp)
                 # Store it in trace dict
-                trace_dict[trial_id][env_id][trace_id] = trace_obj
+                #trace_dict[trial_id][env_id][trace_id] = trace_obj
                 trace_objs.append(trace_obj)
             else:
                 # Load from file!
@@ -174,13 +178,13 @@ class TraceServer(object):
                     trace_obj.env_id = env_id
                     trace_obj.trace_id = trace_id
                 # store it (not sure which of these structures I'll eventually settle on)
-                trace_dict[trial_id][env_id][trace_id] = trace_obj
+                #trace_dict[trial_id][env_id][trace_id] = trace_obj
                 trace_objs.append(trace_obj)
                 # save it out!
                 if not os.path.exists(os.path.dirname(os.path.join(self.trace_dump, trace))): os.makedirs(os.path.dirname(os.path.join(self.trace_dump, trace)))
                 pickle.dump(trace_obj, open(os.path.join(self.trace_dump, trace) + ".pickle", "wb"))
         # Point trace dict instance variable to trace_dict we just built
-        self.trace_dict = trace_dict
+        #self.trace_dict = trace_dict
         self.trace_objs = trace_objs
 
     def _find_all_traces(self, targ_dir):
@@ -312,6 +316,14 @@ class TraceServer(object):
         response = GetAllTracesResponse()
         response.traces = self.trace_objs
         return response
+
+    def shutdown_request_handler(self, request):
+        '''
+        This function handles shutdown service requests
+        '''
+        rospy.loginfo("Handling shutdown request from %s" % request.source)
+        rospy.signal_shutdown("Shutdown request received.")
+        return ShutdownRequestResponse()
 
 
 if __name__ == "__main__":
