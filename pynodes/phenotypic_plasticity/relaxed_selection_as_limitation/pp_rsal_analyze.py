@@ -3,16 +3,16 @@
 import rospy, os, re, math
 import cPickle as pickle
 from avida_ros.srv import GetAllGenotypes, GetAllTraces
-from avida_ros.srv import ShutdownRequest, ShutdownRequestResponse, ShutdownRequestRequest
+from std_msgs.msg import String
 
 '''
 This module implements the analysis for the PhenotypicPlasticity/RelaxedSelectionAsLimitation Project
 '''
 
 # Some global constants (TURN THESE INTO ROS PARAMS)
-ENV_BY_TREATMENT = {"treatment_1": ["nand+not-", "nand-not+"],
-                    "treatment_2": ["nand+not~", "nand~not+"],
-                    "treatment_3": ["nand+not+"]}
+ENV_BY_TREATMENT = {"treatment_1": ["nand+not-", "nand-not+", "nand+", "not+"],
+                    "treatment_2": ["nand+not~", "nand~not+", "nand+", "not+"],
+                    "treatment_3": ["nand+not+", "nand+", "not+"]}
 AVAILABLE_TASKS = ["not", "nand"]
 
 
@@ -82,6 +82,7 @@ class analysis_node(object):
         self.experiment = None
         self.get_all_genotypes_services = {}
         self.get_all_traces_services = {}
+        self.backdoor_pubs = {}
         ##########################################
         # Initialize as ROS node
         rospy.init_node("RSaL_analysis")
@@ -122,6 +123,9 @@ class analysis_node(object):
             srv_name = "%s/get_all_genotypes" % treatment
             if force_build or not pickled: rospy.wait_for_service(srv_name)
             self.get_all_genotypes_services[treatment] = rospy.ServiceProxy(srv_name, GetAllGenotypes)
+            # Setup backdoor publishers
+            self.backdoor_pubs[treatment] = rospy.Publisher("%s/backdoor" % treatment, String, queue_size = 10)
+
         # Load/build experiment
         self._load_experiment(force_build, exp_desc, exp_id, treatments, treatment_info)
 
@@ -130,8 +134,6 @@ class analysis_node(object):
         This is the analysis run function.
         Here is where we should output visualizations, etc. using the experiment data structure.
         '''
-
-
         summary = "" # This will keep track of human readable summary of data
         print(self.experiment.treatments.keys())
         for treatment_key in self.experiment.treatments:
@@ -159,7 +161,33 @@ class analysis_node(object):
         summary_loc = os.path.join(self.analysis_dump, "exp_summary.txt")
         with open(summary_loc, "w") as fp:
             fp.write(summary)
+
+        # Save details as CSV (because all of this data is just too unwieldy)
+        self._exp_to_csv()
+
         print("Done.")
+
+    def _exp_to_csv(self):
+        '''
+        This function saves out whatever is in experiment datastructure to csv file
+        info I want: treatment, replicate, env, org_id, log_fitness, gen_lengh, is_plastic, plasticity_type
+        '''
+        csv_loc = os.path.join(self.analysis_dump, "data.csv")
+        with open(csv_loc, "w") as fp:
+            stringy = "treatment,replicate,environment,organism_id,log_fitness,generation_length,is_plastic,plasticity_type\n"
+            # write out header info
+            for treatment in self.experiment.treatments:
+                # for each treatment:
+                for rep in self.experiment.treatments[treatment].trials:
+                    trial = self.experiment.treatments[treatment].trials[rep]
+                    # for each rep:
+                    for env in trial.environments:
+                        # for each environment: write data out
+                        stringy += "%s,%s,%s,%s,%s,%s,%s,%s\n" % (treatment, trial.id, env, trial.id + "-dom", trial.log_fitness[env], trial.generation_length[env], trial.is_plastic, trial.plasticity_type)
+            fp.write(stringy)
+
+
+
 
     def _clean_params(self):
         '''
@@ -222,9 +250,6 @@ class analysis_node(object):
             # Populate treatments with treatments
             # Also, get all traces and genotypes (by treatment) from servers
             for treatment in treatments:
-                # trace_shutdown_srv = rospy.ServiceProxy("%s/shutdown_trace_server" % treatment, ShutdownRequest)
-                # genotype_shutdown_srv = rospy.ServiceProxy("%s/shutdown_genotype_server" % treatment, ShutdownRequest)
-
                 treatment_id = treatment_info[treatment]["id"]
                 treatment_desc = treatment_info[treatment]["desc"]
                 # Ask servers for all traces/genotypes for this treatment
@@ -232,6 +257,7 @@ class analysis_node(object):
                 #trace_shutdown_srv("pp rsal")
                 genotypes = self.get_all_genotypes_services[treatment]().genotypes
                 #genotype_shutdown_srv("pp rsal")
+                self.backdoor_pubs[treatment].publish(String("shutdown"))
 
                 # Build treatment
                 experiment.treatments[treatment] = self._build_treatment(treatment_id, treatment_desc, traces, genotypes)

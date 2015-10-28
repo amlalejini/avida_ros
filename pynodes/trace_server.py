@@ -4,7 +4,7 @@ import rospy, os, re
 import cPickle as pickle
 from avida_ros.msg import StandardDorgCPU, Trace, Stack
 from avida_ros.srv import GetAllTraces, GetAllTracesResponse, GetAllTracesRequest
-from avida_ros.srv import ShutdownRequest, ShutdownRequestResponse, ShutdownRequestRequest
+from std_msgs.msg import String
 
 class TraceServer(object):
     '''
@@ -44,7 +44,6 @@ class TraceServer(object):
         self.trace_dict = None
         self.trace_objs = None
         self.get_all_traces_srv = None
-        self.shutdown_srv = None
         ##########################################
         # Initialize as ROS node
         rospy.init_node("TraceServer")
@@ -67,9 +66,15 @@ class TraceServer(object):
         self._load_traces(force_extract = force_extraction)
         ##########################################
         # Setup services available to other ROS nodes
-        self.shutdown_srv = rospy.Service("shutdown_trace_server", ShutdownRequest, self.shutdown_request_handler)
+        rospy.Subscriber("backdoor", String, self._backdoor_handler)
         self.get_all_traces_srv = rospy.Service("get_all_traces", GetAllTraces, self.get_all_traces_handler)
 
+    def _backdoor_handler(self, data):
+        '''
+        Hack way to have remote shutdown via ROS network
+        '''
+        if data.data.lower() == "shutdown":
+            rospy.signal_shutdown("Backdoor request.")
 
     def run(self):
         '''
@@ -316,14 +321,6 @@ class TraceServer(object):
         response = GetAllTracesResponse()
         response.traces = self.trace_objs
         return response
-
-    def shutdown_request_handler(self, request):
-        '''
-        This function handles shutdown service requests
-        '''
-        rospy.loginfo("Handling shutdown request from %s" % request.source)
-        rospy.signal_shutdown("Shutdown request received.")
-        return ShutdownRequestResponse()
 
 
 if __name__ == "__main__":

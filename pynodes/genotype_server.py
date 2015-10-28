@@ -3,7 +3,7 @@ import rospy, os, re
 import cPickle as pickle
 from avida_ros.msg import Genotype
 from avida_ros.srv import GetAllGenotypes, GetAllGenotypesResponse, GetAllGenotypesRequest
-from avida_ros.srv import ShutdownRequest, ShutdownRequestResponse, ShutdownRequestRequest
+from std_msgs.msg import String
 
 class GenotypeServer(object):
     '''
@@ -43,8 +43,17 @@ class GenotypeServer(object):
         self._load_genotypes(force_extract = force_extraction)
         ##########################################
         # Setup services available to other ROS nodes
-        self.shutdown_srv = rospy.Service("shutdown_genotype_server", ShutdownRequest, self.shutdown_request_handler)
+        rospy.Subscriber("backdoor", String, self._backdoor_handler)
         self.get_all_genotypes_srv = rospy.Service("get_all_genotypes", GetAllGenotypes, self.get_all_genotypes_handler)
+
+
+    def _backdoor_handler(self, data):
+        '''
+        Hack way to have remote shutdown via ROS network
+        '''
+        if data.data.lower() == "shutdown":
+            rospy.signal_shutdown("Backdoor request.")
+
 
     def get_all_genotypes_handler(self, request):
         '''
@@ -54,13 +63,6 @@ class GenotypeServer(object):
         response.genotypes = self.genotype_objs
         return response
 
-    def shutdown_request_handler(self, request):
-        '''
-        This function handles shutdown service requests
-        '''
-        rospy.loginfo("Handling shutdown request from %s" % request.source)
-        rospy.signal_shutdown("Shutdown request received.")
-        return ShutdownRequestResponse()
 
     def run(self):
         '''
