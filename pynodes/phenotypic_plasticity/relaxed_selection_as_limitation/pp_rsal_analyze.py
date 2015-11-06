@@ -174,7 +174,7 @@ class analysis_node(object):
         '''
         csv_loc = os.path.join(self.analysis_dump, "data.csv")
         with open(csv_loc, "w") as fp:
-            stringy = "treatment,replicate,environment,organism_id,log_fitness,generation_length,is_plastic,plasticity_type\n"
+            stringy = "treatment,replicate,environment,organism_id,log_fitness,avg_incubator_log_fitness,generation_length,is_plastic,plasticity_type\n"
             # write out header info
             for treatment in self.experiment.treatments:
                 # for each treatment:
@@ -183,7 +183,7 @@ class analysis_node(object):
                     # for each rep:
                     for env in trial.environments:
                         # for each environment: write data out
-                        stringy += "%s,%s,%s,%s,%s,%s,%s,%s\n" % (treatment, trial.id, env, trial.id + "-dom", trial.log_fitness[env], trial.generation_length[env], trial.is_plastic, trial.plasticity_type)
+                        stringy += "%s,%s,%s,%s,%s,%s,%s,%s,%s\n" % (treatment, trial.id, env, trial.id + "-dom", trial.log_fitness[env], trial.avg_incubator_log_fitness, trial.generation_length[env], trial.is_plastic, trial.plasticity_type)
             fp.write(stringy)
 
 
